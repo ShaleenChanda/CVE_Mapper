@@ -1,23 +1,32 @@
 package pkgvulnmapper
 
 import (
+	"fmt"
 	"github.com/CloudDefenseAI/cve-mapper/models"
 	"strings"
 )
 
 // VulnerablePackageFinder finds the vulnerabilities of a package.
-// arguments: {
-//		packageName: name of the package
-//		packageVersion: version of the package
-//		cveInfo: map of CVE information
-// }
-func VulnerablePackageFinder (
-	packageName string, 
-	packageVersion string, 
+//
+//	arguments: {
+//			packageName: name of the package
+//			packageVersion: version of the package
+//			cveInfo: map of CVE information
+//	}
+func VulnerablePackageFinder(
+	packageName string,
+	packageVersion string,
 	cveInfo datamodel.CVEMap,
-) ([]datamodel.VulnerablityInfo) {
+) ([]datamodel.VulnerablityInfo, error) {
 
-	var cveListOfPackage []datamodel.CVEInfo = cveInfo[packageName]
+	cveListOfPackage, ok := cveInfo[packageName]
+
+	// If Package is not found in the CVE data,
+	// return empty vulnerabilityList
+	if !ok || len(cveListOfPackage) == 0 {
+		return []datamodel.VulnerablityInfo{}, fmt.Errorf("package not found in the CVE database")
+	}
+
 	var vulnerabilityList []datamodel.VulnerablityInfo
 	for _, cveItem := range cveListOfPackage {
 		if matchVulnerabilityByVersion(packageVersion, cveItem.VersionInfo) {
@@ -31,24 +40,25 @@ func VulnerablePackageFinder (
 	}
 
 	// vulnerabilityList will be empty if no vulnerability is found.
-	return vulnerabilityList
+	return vulnerabilityList, nil
 }
 
 // matchVulnerabilityByVersion checks if the packageVersion is vulnerable to the given CVE.
-// arguments: {
-//		packageVersion: version of the package
-//		versionInfo: version information of the package from the CVE
-// }
+//
+//	arguments: {
+//			packageVersion: version of the package
+//			versionInfo: version information of the package from the CVE
+//	}
 func matchVulnerabilityByVersion(
-	packageVersion string, 
+	packageVersion string,
 	versionInfo datamodel.VersionInfo,
 ) bool {
-	// If Exact match is exists between packageVersion and versionInfo.PackageVersionStartIncluding
+	// If Exact match exists between packageVersion and versionInfo.PackageVersionStartIncluding
 	if versionInfo.PackageVersionExact != "NA" {
 		standardizeInfoVersion := standardizeVersion(versionInfo.PackageVersionExact)
 		standardizePackageVersion := standardizeVersion(packageVersion)
 
-		// If Exact match is exists between packageVersion and versionInfo.PackageVersionExact
+		// If Exact match exists between packageVersion and versionInfo.PackageVersionExact
 		if standardizeInfoVersion == standardizePackageVersion {
 			return true
 		}
@@ -58,23 +68,22 @@ func matchVulnerabilityByVersion(
 }
 
 // standardizeVersion standardizes the version string to a 4 part version string.
-// arguments: {
-//		version: version string
-// }
+//
+//	arguments: {
+//			version: version string
+//	}
 func standardizeVersion(version string) string {
-    // Trim leading and trailing dots
-    version = strings.Trim(version, ".")
+	// Trim leading and trailing dots
+	version = strings.Trim(version, ".")
 
-    // If the version is empty after trimming, return "0.0.0.0"
-    if version == "" {
-        return "0.0.0.0"
-    }
+	// If the version is empty after trimming, return "0.0.0.0"
+	if version == "" {
+		return "0.0.0.0"
+	}
 
-    parts := strings.Split(version, ".")
-    for len(parts) < 4 {
-        parts = append(parts, "0")
-    }
-    return strings.Join(parts, ".")
+	parts := strings.Split(version, ".")
+	for len(parts) < 4 {
+		parts = append(parts, "0")
+	}
+	return strings.Join(parts, ".")
 }
-
-
