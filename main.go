@@ -4,26 +4,27 @@ import (
 	"fmt"
 	"github.com/CloudDefenseAI/cve-mapper/filehandlers"
 	"github.com/CloudDefenseAI/cve-mapper/models"
+	"github.com/CloudDefenseAI/cve-mapper/mappers"
 )
 
-
 func main() {
-	var cveInfo datamodel.CVEMap
-	cveInfo, err := jsonhandler.LoadCVEsFromJSON("data/transformed_data.json")
+	var infoMap datamodel.CVEMap
+	var error error
+	infoMap , error = jsonhandler.LoadCVEsFromJSON("data/transformed_data.json")
 
-	if err != nil {
-		fmt.Printf("Failed to extract data from json with error: %s", err)
+	if error != nil {	
+		fmt.Println(error)
+		return
 	}
 
-	var count int = 0
+	var vulnInfoList []datamodel.VulnerablityInfo = pkgvulnmapper.VulnerablePackageFinder("autocad_plant_3d", "2040", infoMap)
 
-	for key, value := range cveInfo {
-		fmt.Printf("package name is : %s \n", key)
-		fmt.Print(value)
-		fmt.Println()
-		count += len(value)
+	for _, vulnInfo := range vulnInfoList {
+		fmt.Println(vulnInfo)
 	}
 
-	fmt.Printf("the total entries are : %d \n", count)
+	fmt.Println(len(vulnInfoList))
 
 }
+
+
