@@ -17,7 +17,12 @@ func main() {
 		return
 	}
 
-	var vulnInfoList []datamodel.VulnerablityInfo = pkgvulnmapper.VulnerablePackageFinder("autocad_plant_3d", "2040", infoMap)
+	vulnInfoList, error := pkgvulnmapper.VulnerablePackageFinder("opera_browser", "7.20", infoMap)
+
+	if error != nil {
+		fmt.Println(error)
+		return
+	}
 
 	for _, vulnInfo := range vulnInfoList {
 		fmt.Println(vulnInfo)

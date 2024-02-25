@@ -28,14 +28,21 @@ func VulnerablePackageFinder(
 	}
 
 	var vulnerabilityList []datamodel.VulnerablityInfo
+	// map to maintain unique vulnerabilities
+	uniqueCVEMap := make(map[string]int)
+	
 	for _, cveItem := range cveListOfPackage {
 		if matchVulnerabilityByVersion(packageVersion, cveItem.VersionInfo) {
-			vulnerabilityList = append(vulnerabilityList, datamodel.VulnerablityInfo{
-				PackageName: packageName,
-				VersionInfo: packageVersion,
-				CVEID:       cveItem.CVEID,
-				Severity:    cveItem.Impact.Severity,
-			})
+			// If the vulnerability is not already added to the list, add it to the list
+			if uniqueCVEMap[cveItem.CVEID] < 1 {
+				uniqueCVEMap[cveItem.CVEID] = 1
+				vulnerabilityList = append(vulnerabilityList, datamodel.VulnerablityInfo{
+					PackageName: packageName,
+					VersionInfo: packageVersion,
+					CVEID:       cveItem.CVEID,
+					Severity:    cveItem.Impact.Severity,
+				})
+			}
 		}
 	}
 
